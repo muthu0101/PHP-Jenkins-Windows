@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="MyFirstProject" default="build" basedir=".">
+    <target name="clean">
+        <!-- Clean up -->
+        <delete dir="${basedir}/build" />
+
+        <!-- Create build directories -->
+        <mkdir dir="${basedir}/build/api" />
+        <mkdir dir="${basedir}/build/code-browser" />
+        <mkdir dir="${basedir}/build/coverage" />
+        <mkdir dir="${basedir}/build/logs" />
+    </target>
+
+
+    <!-- Run the pdepend, phpmd, phpcpd, phpcs, phpdoc and phploc tasks in parallel
+        using a maximum of 2 threads. -->
+    <target name="parallelTasks">
+        <parallel threadCount="1">
+		    <sequential>
+                <antcall target="pdepend"/>
+                <antcall target="phpmd"/>
+            </sequential>
+            <antcall target="phpcpd" />
+            <antcall target="phploc" />
+            <antcall target="phpcs" />
+            <antcall target="phpdoc" />
+        </parallel>
+    </target>
+
+	<!-- Generate jdepend.xml and software metrics charts -->
+	<target name="pdepend">
+		<exec executable="cmd">
+			<arg line="/c C:\wamp\tools\phpmd\src\bin\phpmd.bat
+				--jdepend-xml='${basedir}/build/logs/jdepend.xml'
+				--jdepend-chart='${basedir}/build/pdepend/dependencies.svg'
+				--summary-xml='${basedir}/build/logs/jdepend-summary.xml'
+				--overview-pyramid='${basedir}/build/pdepend/overview-pyramid.svg'
+				application
+				" />
+		</exec>
+	</target>
+
+	<!-- Generate pmd.xml -->
+	<target name="phpmd">
+		<exec executable="cmd">
+			<arg line="/c C:\wamp\tools\phpmd\src\bin\phpmd.bat application
+			  xml
+			  codesize,design,naming,unusedcode
+			  --reportfile '${basedir}/build/logs/pmd.xml'
+			  " />
+		</exec>
+	</target>
+
+    <!-- Generate pmd-cpd.xml -->
+    <target name="phpcpd">
+        <exec executable="cmd">
+            <arg line="/c php C:\wamp\www\phpcpd.phar application --log-pmd '${basedir}/build/logs/pmd-cpd.xml' " />
+        </exec>
+    </target>
+
+    <!-- Generate phploc.csv -->
+    <target name="phploc">
+        <exec executable="cmd">
+            <arg line="/c php C:\wamp\www\phploc.phar application --log-csv '${basedir}/build/logs/phploc.txt' " />
+        </exec>
+    </target>
+
+    <!-- Generate checkstyle.xml -standard='${basedir}/docs/coding-standard/ruleset.xml' -->
+    <target name="phpcs">
+        <exec executable="cmd">
+            <arg line="/c C:\wamp\tools\PHP_CodeSniffer\scripts\phpcs.bat
+            --report=checkstyle
+            --report-file='${basedir}/build/logs/checkstyle.xml'
+            -p
+            application " />
+        </exec>
+    </target>
+
+    <!-- Generate API documentation -ignore    '${basedir}/lib/Zend/*' -->
+    <target name="phpdoc">
+        <exec executable="cmd">
+            <arg line="/c php C:\wamp\www\phpdoc.phar
+            --directory application
+            --target    '${basedir}/build/api'
+           " />
+        </exec>
+    </target>
+
+
+    <target name="build" depends="clean,parallelTasks" />
+</project>
